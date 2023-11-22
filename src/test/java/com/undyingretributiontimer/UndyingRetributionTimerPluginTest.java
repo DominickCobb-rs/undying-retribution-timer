@@ -1,13 +1,13 @@
-package com.example;
+package com.undyingretributiontimer;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
-public class ExamplePluginTest
+public class UndyingRetributionTimerPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(ExamplePlugin.class);
+		ExternalPluginManager.loadBuiltin(UndyingRetributionTimerPlugin.class);
 		RuneLite.main(args);
 	}
 }
