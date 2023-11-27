@@ -77,7 +77,6 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	private InfoBoxManager infoBoxManager;
 	private static final String CONFIG_GROUP = "undyingretributiontimer";
 	private static final int maxTicks = 300;
-	private static final int TOMBS_OF_AMASCUT_VARP = 2926;
 	private static final int NOT_IN_RAID = 0;
 
 	private boolean previouslyInRaid = false;
@@ -89,12 +88,8 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	public boolean onCooldown = false;
 	public boolean pause = false;
 	public int remainingTicks;
-	// private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	// private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
-
-	// Test strings
-	private static final String cooldownNotification = "Test start";
-	private static final String resetNotification = "Test stop";
+	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
+	private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
 
 	// delay inRaid = false by 3 ticks to alleviate any unexpected delays between rooms
 	private int raidLeaveTicks = 0;
@@ -194,7 +189,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
 		{
-			// return;
+			return;
 		}
 		if (message.contains(cooldownNotification))
 		{
