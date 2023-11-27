@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2022, Tom
  * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
+ * Copyright (c) 2022, LlemonDuck
+ * Copyright (c) 2022, TheStonedTurtle
+ * Copyright (c) 2019, Ron Young <https://github.com/raiyni>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,21 +27,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.undyingretributiontimer;
+import com.undyingretributiontimer.RaidRoom;
+
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Player;
 import net.runelite.api.Actor;
-import net.runelite.api.Client;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MessageNode;
+import net.runelite.api.Player;
+import net.runelite.api.Varbits;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -54,7 +64,6 @@ import net.runelite.client.util.ImageUtil;
 )
 public class UndyingRetributionTimerPlugin extends Plugin
 {
-	private static final String CONFIG_GROUP = "undyingretributiontimer";
 	@Inject
 	private Client client;
 
@@ -66,28 +75,56 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	@Inject
 	private InfoBoxManager infoBoxManager;
+	private static final String CONFIG_GROUP = "undyingretributiontimer";
+	private static final int maxTicks = 300;
+	private static final int TOMBS_OF_AMASCUT_VARP = 2926;
+	private static final int NOT_IN_RAID = 0;
+
+	private boolean previouslyInRaid = false;
 
 	private UndyingRetributionTimerInfoBox infoBox;
 
+	private boolean previouslyInToa = false;
+	private boolean leftRaid = false;
 	public boolean onCooldown = false;
 	public boolean pause = false;
-	private static final int maxTicks = 300;
 	public int remainingTicks;
+	// private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
+	// private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
 
-	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
+	// Test strings
+	private static final String cooldownNotification = "Test start";
+	private static final String resetNotification = "Test stop";
+
+	// delay inRaid = false by 3 ticks to alleviate any unexpected delays between rooms
+	private int raidLeaveTicks = 0;
+	private static final int WIDGET_PARENT_ID = 481;
+	private static final int WIDGET_CHILD_ID = 40;
+
 	@Override
 	protected void startUp() throws Exception
 	{
-		if (configManager.getConfiguration(CONFIG_GROUP,"cooldown") == null)
+		if (configManager.getConfiguration(CONFIG_GROUP, "cooldown") == null)
 		{
+			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "false");
 			configManager.setConfiguration(CONFIG_GROUP, "cooldown", "-1");
 		}
 		if (client.getGameState().equals(GameState.LOGGED_IN))
 		{
-			checkCooldown();
+			previouslyInRaid = Boolean.parseBoolean(configManager.getConfiguration(CONFIG_GROUP, "previouslyInRaid"));
+			if (previouslyInRaid && !inRaidNow())
+			{
+				offCooldown();
+				remainingTicks = 0;
+				createInfobox();
+			}
+			else
+			{
+				checkCooldown();
+			}
 		}
 	}
+
 	@Override
 	protected void shutDown() throws Exception
 	{
@@ -97,7 +134,6 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
-		System.out.println(String.valueOf(event.getGameState()));
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			createInfobox();
@@ -124,11 +160,31 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		{
 			return;
 		}
+		LocalPoint lp = client.getLocalPlayer().getLocalLocation();
+		int region = lp == null ? -1 : WorldPoint.fromLocalInstance(client, lp).getRegionID();
+
+		Widget w = client.getWidget(WIDGET_PARENT_ID, WIDGET_CHILD_ID);
+
+		RaidRoom currentRoom = RaidRoom.forRegionId(region);
+		boolean inRaidRaw = currentRoom != null || (w != null && !w.isHidden());
+
+		raidLeaveTicks = inRaidRaw ? 3 : raidLeaveTicks - 1;
+
+		boolean inToa = raidLeaveTicks > 0;
+
+		if (leftRaid || (previouslyInToa && !inToa))
+		{
+			System.out.println("Leave raid detected, resetting cooldown");
+			offCooldown();
+			previouslyInToa = false;
+			leftRaid = false;
+			return;
+		}
 		if (remainingTicks >= 0)
 		{
-			remainingTicks-=1;
+			remainingTicks -= 1;
 		}
-
+		previouslyInToa = inToa;
 	}
 
 	@Subscribe
@@ -138,7 +194,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
 		{
-			return;
+			// return;
 		}
 		if (message.contains(cooldownNotification))
 		{
@@ -161,18 +217,63 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			Player player = (Player) actor;
 			if (player == client.getLocalPlayer() && onCooldown)
 			{
-				onCooldown = false;
-				remainingTicks = 0;
+				offCooldown();
 			}
 		}
 	}
 
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged e)
+	{
+		if (e.getVarbitId() != Varbits.THEATRE_OF_BLOOD && e.getVarbitId() != Varbits.IN_RAID)
+		{
+			return;
+		}
+
+		boolean currentlyInRaid = inRaidNow();
+		if (currentlyInRaid && !previouslyInRaid)
+		{
+			System.out.println("Raid entered");
+			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "true");
+		}
+		else if (!currentlyInRaid && previouslyInRaid)
+		{
+			System.out.println("Raid left");
+			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "false");
+			if (onCooldown)
+			{
+				leftRaid = true;
+			}
+		}
+		previouslyInRaid = currentlyInRaid;
+	}
+
+	public boolean inRaidNow()
+	{
+		// ToB
+		if (client.getVarbitValue(Varbits.THEATRE_OF_BLOOD) == 2 || client.getVarbitValue(Varbits.THEATRE_OF_BLOOD) == 3)
+		{
+			return true;
+		}
+		// Chambers
+		if (client.getVarbitValue(Varbits.IN_RAID) != NOT_IN_RAID)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void offCooldown()
+	{
+		onCooldown = false;
+		remainingTicks = 0;
+	}
 
 	private void createInfobox()
 	{
 		if (infoBox == null)
 		{
-			BufferedImage icon = ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class,"/icons/infoboxIcon.png");
+			BufferedImage icon = ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class, "/icons/infoboxIcon.png");
 			infoBox = new UndyingRetributionTimerInfoBox(this, config);
 			infoBox.setImage(icon);
 			infoBoxManager.addInfoBox(infoBox);
@@ -208,13 +309,16 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	private void checkCooldown()
 	{
-		int storedCooldown = Integer.parseInt(configManager.getConfiguration(CONFIG_GROUP,"cooldown"));
-		if (storedCooldown > 0)
+		if (!onCooldown)
 		{
-			cooldown(storedCooldown);
-			return;
+			int storedCooldown = Integer.parseInt(configManager.getConfiguration(CONFIG_GROUP, "cooldown"));
+			if (storedCooldown > 0)
+			{
+				cooldown(storedCooldown);
+				return;
+			}
+			remainingTicks = storedCooldown;
 		}
-		remainingTicks = storedCooldown;
 	}
 
 	private void save(boolean quitting)
@@ -225,6 +329,19 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			infoBox = null;
 		}
 		configManager.setConfiguration(CONFIG_GROUP, "cooldown", Integer.toString(remainingTicks));
+		configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", (previouslyInRaid));
+	}
+
+	public boolean contains(int[] array, int value)
+	{
+		for (int item : array)
+		{
+			if (item == value)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Provides
