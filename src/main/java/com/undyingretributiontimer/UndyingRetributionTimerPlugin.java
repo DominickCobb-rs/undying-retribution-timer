@@ -74,10 +74,8 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	private static final int maxTicks = 300;
 	public int remainingTicks;
 
-	// private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	// private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
-	private static final String cooldownNotification = "Test start";
-	private static final String resetNotification = "Test stop";
+	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
+	private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -140,7 +138,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
 		{
-			// return;
+			return;
 		}
 		if (message.contains(cooldownNotification))
 		{
