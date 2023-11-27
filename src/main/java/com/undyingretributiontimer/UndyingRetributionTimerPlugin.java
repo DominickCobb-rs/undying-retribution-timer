@@ -197,9 +197,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		}
 		if (message.contains(resetNotification))
 		{
-			onCooldown = false;
-			remainingTicks = 0;
-			save(false);
+			offCooldown();
 		}
 	}
 
@@ -262,6 +260,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		onCooldown = false;
 		remainingTicks = 0;
+		save(false);
 	}
 
 	private void createInfobox()
