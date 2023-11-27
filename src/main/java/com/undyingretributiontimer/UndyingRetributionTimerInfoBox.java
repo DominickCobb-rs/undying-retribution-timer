@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022, Tom
  * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *
@@ -46,9 +47,13 @@ public class UndyingRetributionTimerInfoBox extends InfoBox
 	public String getText()
 	{
 		String str;
-		if (!plugin.onCooldown)
+		if (!plugin.onCooldown && plugin.remainingTicks == 0)
 		{
 			return "";
+		}
+		if (plugin.remainingTicks < 0)
+		{
+			return "?";
 		}
 
 		if (config.displayMode() == UndyingRetributionTimerConfig.DisplayMode.TICKS)
@@ -69,6 +74,10 @@ public class UndyingRetributionTimerInfoBox extends InfoBox
 	@Override
 	public Color getTextColor()
 	{
+		if (plugin.remainingTicks == -1)
+		{
+			return Color.CYAN;
+		}
 		return config.textColor();
 	}
 

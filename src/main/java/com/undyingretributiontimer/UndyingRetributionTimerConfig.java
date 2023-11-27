@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022, Tom
  * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *

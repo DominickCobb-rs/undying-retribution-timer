@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022, Tom
  * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *
@@ -53,6 +54,7 @@ import net.runelite.client.util.ImageUtil;
 )
 public class UndyingRetributionTimerPlugin extends Plugin
 {
+	private static final String CONFIG_GROUP = "undyingretributiontimer";
 	@Inject
 	private Client client;
 
@@ -60,57 +62,75 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	private UndyingRetributionTimerConfig config;
 
 	@Inject
+	private ConfigManager configManager;
+
+	@Inject
 	private InfoBoxManager infoBoxManager;
 
 	private UndyingRetributionTimerInfoBox infoBox;
 
 	public boolean onCooldown = false;
+	public boolean pause = false;
 	private static final int maxTicks = 300;
 	public int remainingTicks;
 
-	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
-
+	// private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
+	// private static final String resetNotification = "You are able to benefit from the Undying Retribution Relic's effect.";
+	private static final String cooldownNotification = "Test start";
+	private static final String resetNotification = "Test stop";
 	@Override
 	protected void startUp() throws Exception
 	{
+		if (configManager.getConfiguration(CONFIG_GROUP,"cooldown") == null)
+		{
+			configManager.setConfiguration(CONFIG_GROUP, "cooldown", "-1");
+		}
 		if (client.getGameState().equals(GameState.LOGGED_IN))
 		{
-			createInfobox();
+			checkCooldown();
 		}
 	}
 	@Override
 	protected void shutDown() throws Exception
 	{
-		if (infoBox != null)
-		{
-			infoBoxManager.removeInfoBox(infoBox);
-			infoBox = null;
-		}
+		save(true);
 	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
+		System.out.println(String.valueOf(event.getGameState()));
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			createInfobox();
+			checkCooldown();
+			pause = false;
+			return;
 		}
 		if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
-			infoBoxManager.removeInfoBox(infoBox);
-			infoBox = null;
+			save(true);
+			return;
+		}
+		if (event.getGameState() == GameState.HOPPING)
+		{
+			save(false);
+			pause = true;
 		}
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!onCooldown)
+		if (!onCooldown || pause)
 		{
 			return;
 		}
-		remainingTicks-=1;
+		if (remainingTicks >= 0)
+		{
+			remainingTicks-=1;
+		}
+
 	}
 
 	@Subscribe
@@ -120,16 +140,17 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
 		{
-			return;
+			// return;
 		}
 		if (message.contains(cooldownNotification))
 		{
-			cooldown();
+			cooldown(maxTicks);
 		}
 		if (message.contains(resetNotification))
 		{
 			onCooldown = false;
 			remainingTicks = 0;
+			save(false);
 		}
 	}
 
@@ -160,11 +181,14 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		}
 	}
 
-	private void cooldown()
+	private void cooldown(int ticks)
 	{
-		createInfobox();
-		onCooldown = true;
-		remainingTicks = maxTicks;
+		if (ticks != 0)
+		{
+			createInfobox();
+			onCooldown = true;
+			remainingTicks = ticks;
+		}
 	}
 
 	public static String to_mmss(int ticks)
@@ -182,6 +206,27 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		int sec_tenth = tmp - sec * 10;
 		return min + (sec < 10 ? ":0" : ":") + sec + "." +
 			sec_tenth;
+	}
+
+	private void checkCooldown()
+	{
+		int storedCooldown = Integer.parseInt(configManager.getConfiguration(CONFIG_GROUP,"cooldown"));
+		if (storedCooldown > 0)
+		{
+			cooldown(storedCooldown);
+			return;
+		}
+		remainingTicks = storedCooldown;
+	}
+
+	private void save(boolean quitting)
+	{
+		if (infoBox != null && quitting)
+		{
+			infoBoxManager.removeInfoBox(infoBox);
+			infoBox = null;
+		}
+		configManager.setConfiguration(CONFIG_GROUP, "cooldown", Integer.toString(remainingTicks));
 	}
 
 	@Provides
