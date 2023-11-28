@@ -335,6 +335,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged e)
 	{
+		if (!e.getGroup().equals(CONFIG_GROUP))
+		{
+			return;
+		}
 		if (e.getKey().contains("onlyShowOnCooldown"))
 		{
 			if (Boolean.parseBoolean(e.getNewValue()) && !onCooldown)
