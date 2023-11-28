@@ -63,4 +63,15 @@ public interface UndyingRetributionTimerConfig extends Config
 	{
 		return Color.RED;
 	}
+
+	@ConfigItem(
+		keyName = "onlyShowOnCooldown",
+		name = "Only show on cooldown",
+		description = "Only show the infobox while the timer is ticking down",
+		position = 2
+	)
+	default boolean onlyShowOnCooldown()
+	{
+		return false;
+	}
 }

@@ -32,8 +32,11 @@ import com.undyingretributiontimer.RaidRoom;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.util.EnumSet;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.World;
+import net.runelite.api.WorldType;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -51,6 +54,7 @@ import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
@@ -104,7 +108,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "false");
 			configManager.setConfiguration(CONFIG_GROUP, "cooldown", "-1");
 		}
-		if (client.getGameState().equals(GameState.LOGGED_IN))
+		if (client.getGameState().equals(GameState.LOGGED_IN) && client.getWorldType().contains(WorldType.SEASONAL))
 		{
 			previouslyInRaid = Boolean.parseBoolean(configManager.getConfiguration(CONFIG_GROUP, "previouslyInRaid"));
 			if (previouslyInRaid && !inRaidNow())
@@ -131,9 +135,14 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
+			if (!client.getWorldType().contains(WorldType.SEASONAL))
+			{
+				removeInfobox();
+				return;
+			}
 			createInfobox();
 			checkCooldown();
-			pause = false;
+			pause=false;
 			return;
 		}
 		if (event.getGameState() == GameState.LOGIN_SCREEN)
@@ -151,7 +160,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!onCooldown || pause)
+		if (!onCooldown || pause || !client.getWorldType().contains(WorldType.SEASONAL))
 		{
 			return;
 		}
@@ -204,6 +213,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onActorDeath(ActorDeath actorDeath)
 	{
+		if (!client.getWorldType().contains(WorldType.SEASONAL))
+		{
+			return;
+		}
 		Actor actor = actorDeath.getActor();
 		if (actor instanceof Player)
 		{
@@ -218,7 +231,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged e)
 	{
-		if (e.getVarbitId() != Varbits.THEATRE_OF_BLOOD && e.getVarbitId() != Varbits.IN_RAID)
+		if (!(client.getWorldType().contains(WorldType.SEASONAL)) && e.getVarbitId() != Varbits.THEATRE_OF_BLOOD && e.getVarbitId() != Varbits.IN_RAID)
 		{
 			return;
 		}
@@ -258,6 +271,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	private void offCooldown()
 	{
+		if (config.onlyShowOnCooldown())
+		{
+			removeInfobox();
+		}
 		onCooldown = false;
 		remainingTicks = 0;
 		save(false);
@@ -303,7 +320,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	private void checkCooldown()
 	{
-		if (!onCooldown)
+		if (!onCooldown || pause)
 		{
 			int storedCooldown = Integer.parseInt(configManager.getConfiguration(CONFIG_GROUP, "cooldown"));
 			if (storedCooldown > 0)
@@ -312,6 +329,24 @@ public class UndyingRetributionTimerPlugin extends Plugin
 				return;
 			}
 			remainingTicks = storedCooldown;
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged e)
+	{
+		if (e.getKey().contains("onlyShowOnCooldown"))
+		{
+			if (Boolean.parseBoolean(e.getNewValue()) && !onCooldown)
+			{
+				removeInfobox();
+				return;
+			}
+			// Don't need to check if on cooldown, and createInfobox() checks if it's not null
+			if (!Boolean.parseBoolean(e.getNewValue()))
+			{
+				createInfobox();
+			}
 		}
 	}
 
@@ -326,16 +361,13 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", (previouslyInRaid));
 	}
 
-	public boolean contains(int[] array, int value)
+	private void removeInfobox()
 	{
-		for (int item : array)
+		if (infoBox != null)
 		{
-			if (item == value)
-			{
-				return true;
-			}
+			infoBoxManager.removeInfoBox(infoBox);
+			infoBox = null;
 		}
-		return false;
 	}
 
 	@Provides
