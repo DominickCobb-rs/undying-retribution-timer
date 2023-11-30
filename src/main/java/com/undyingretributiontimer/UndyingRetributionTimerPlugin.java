@@ -92,10 +92,12 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	public boolean onCooldown = false;
 	public boolean pause = false;
 	public int remainingTicks;
-	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	private static final String resetNotification1 = "You are able to benefit from the Undying Retribution Relic's effect.";
-	private static final String resetNotification2 = "Your Undying Retribution Relic's cooldown has ended and you may now benefit from its effect.";
-
+	//private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
+	//private static final String resetNotification1 = "You are able to benefit from the Undying Retribution Relic's effect.";
+	//private static final String resetNotification2 = "Your Undying Retribution Relic's cooldown has ended and you may now benefit from its effect.";
+	private static final String cooldownNotification = "Test start";
+	private static final String resetNotification1 = "Test stop";
+	private static final String resetNotification2 = "Test stop2";
 	// delay inRaid = false by 3 ticks to alleviate any unexpected delays between rooms
 	private int raidLeaveTicks = 0;
 	private static final int WIDGET_PARENT_ID = 481;
@@ -114,9 +116,13 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			previouslyInRaid = Boolean.parseBoolean(configManager.getConfiguration(CONFIG_GROUP, "previouslyInRaid"));
 			if (previouslyInRaid && !inRaidNow())
 			{
+				configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", false);
 				offCooldown();
 				remainingTicks = 0;
-				createInfobox();
+				if (!config.onlyShowOnCooldown())
+				{
+					createInfobox();
+				}
 			}
 			else
 			{
@@ -141,7 +147,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 				removeInfobox();
 				return;
 			}
-			createInfobox();
+			if (!config.onlyShowOnCooldown())
+			{
+				createInfobox();
+			}
 			checkCooldown();
 			pause=false;
 			return;
@@ -199,7 +208,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
 		{
-			return;
+			//return;
 		}
 		if (message.contains(cooldownNotification))
 		{
