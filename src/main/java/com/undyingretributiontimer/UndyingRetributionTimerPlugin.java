@@ -62,9 +62,9 @@ import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Undying Retribution Timer",
+	name = "Last Stand Timer",
 	description = "A timer to keep track of undying retribution cooldown",
-	tags = {"undying", "retribution", "timer", "relic"}
+	tags = {"Last", "Stand", "timer", "relic"}
 )
 public class UndyingRetributionTimerPlugin extends Plugin
 {
@@ -92,9 +92,9 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	public boolean onCooldown = false;
 	public boolean pause = false;
 	public int remainingTicks;
-	private static final String cooldownNotification = "Your Undying Retribution Relic saves your life. The Relic has lost power for 3 minutes.";
-	private static final String resetNotification1 = "You are able to benefit from the Undying Retribution Relic's effect.";
-	private static final String resetNotification2 = "Your Undying Retribution Relic's cooldown has ended and you may now benefit from its effect.";
+	private static final String cooldownNotification = "Your Last Stand Relic saves your life. The Relic has lost power for 3 minutes.";
+	private static final String resetNotification1 = "You are able to benefit from the Last Stand Relic's effect.";
+	private static final String resetNotification2 = "Your Last Stand Relic's cooldown has ended and you may now benefit from its effect.";
 	// delay inRaid = false by 3 ticks to alleviate any unexpected delays between rooms
 	private int raidLeaveTicks = 0;
 	private static final int WIDGET_PARENT_ID = 481;
