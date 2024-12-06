@@ -84,6 +84,6 @@ public class UndyingRetributionTimerInfoBox extends InfoBox
 	@Override
 	public String getTooltip()
 	{
-		return "Undying Retribution";
+		return "Last Stand";
 	}
 }

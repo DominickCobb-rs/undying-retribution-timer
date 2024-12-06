@@ -63,7 +63,7 @@ import net.runelite.client.util.ImageUtil;
 @Slf4j
 @PluginDescriptor(
 	name = "Last Stand Timer",
-	description = "A timer to keep track of undying retribution cooldown",
+	description = "A timer to keep track of Last Stand cooldown",
 	tags = {"Last", "Stand", "timer", "relic"}
 )
 public class UndyingRetributionTimerPlugin extends Plugin
