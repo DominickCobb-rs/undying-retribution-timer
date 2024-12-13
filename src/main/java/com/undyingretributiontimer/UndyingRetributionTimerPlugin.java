@@ -64,6 +64,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 
 @Slf4j
@@ -265,10 +266,12 @@ public class UndyingRetributionTimerPlugin extends Plugin
 					ChatMessageBuilder chatMessage = new ChatMessageBuilder()
 							.append(ChatColorType.HIGHLIGHT)
 							.append("Last stand had "+remains+" remaining on cooldown.");
-					// TODO: Make better color
+
+					Color color = Color.decode("#1A7394");
+
 					chatMessageManager.queue(QueuedMessage.builder()
 							.type(ChatMessageType.GAMEMESSAGE)
-							.runeLiteFormattedMessage(chatMessage.build().replaceAll("colHIGHLIGHT","col=1a7394"))
+							.runeLiteFormattedMessage(ColorUtil.wrapWithColorTag("Last stand had "+remains+" remaining on cooldown.", color))
 							.build());
 				}
 				offCooldown();

@@ -83,6 +83,6 @@ public interface UndyingRetributionTimerConfig extends Config
 	)
 	default boolean printRemaining()
 	{
-		return false;
+		return true;
 	}
 }
