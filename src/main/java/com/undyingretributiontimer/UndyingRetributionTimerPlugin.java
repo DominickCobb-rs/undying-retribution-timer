@@ -31,6 +31,8 @@ import com.undyingretributiontimer.RaidRoom;
 
 
 import com.google.inject.Provides;
+
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
 import javax.inject.Inject;
@@ -52,6 +54,10 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -79,6 +85,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	@Inject
 	private InfoBoxManager infoBoxManager;
+
+	@Inject
+	private ChatMessageManager chatMessageManager;
+
 	private static final String CONFIG_GROUP = "undyingretributiontimer";
 	private static final int maxTicks = 300;
 	private static final int NOT_IN_RAID = 0;
@@ -99,6 +109,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	private int raidLeaveTicks = 0;
 	private static final int WIDGET_PARENT_ID = 481;
 	private static final int WIDGET_CHILD_ID = 40;
+	private Color messageColor;
 
 	@Override
 	protected void startUp() throws Exception
@@ -201,6 +212,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
 	{
+		//TODO: Get color of the message sent by league... maybe
 		MessageNode messageNode = chatMessage.getMessageNode();
 		String message = messageNode.getValue();
 		if (!messageNode.getType().equals(ChatMessageType.GAMEMESSAGE))
@@ -230,6 +242,35 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			Player player = (Player) actor;
 			if (player == client.getLocalPlayer() && onCooldown)
 			{
+				if(config.printRemaining())
+				{
+					String remains = "";
+					switch (config.displayMode())
+					{
+						case TICKS:
+						{
+							remains = Integer.toString(remainingTicks)+" ticks";
+						} break;
+
+						case SECONDS:
+						{
+							remains = to_mmss(remainingTicks)+" seconds";
+						} break;
+
+						case DECIMALS:
+						{
+							remains = to_mmss_precise_short(remainingTicks)+" seconds";
+						} break;
+					}
+					ChatMessageBuilder chatMessage = new ChatMessageBuilder()
+							.append(ChatColorType.HIGHLIGHT)
+							.append("Last stand had "+remains+" remaining on cooldown.");
+					// TODO: Make better color
+					chatMessageManager.queue(QueuedMessage.builder()
+							.type(ChatMessageType.GAMEMESSAGE)
+							.runeLiteFormattedMessage(chatMessage.build().replaceAll("colHIGHLIGHT","col=1a7394"))
+							.build());
+				}
 				offCooldown();
 			}
 		}

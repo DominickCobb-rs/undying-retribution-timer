@@ -74,4 +74,15 @@ public interface UndyingRetributionTimerConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+			keyName = "printRemaining",
+			name = "Print remaining time in chat",
+			description = "Print how much time was left on cooldown when you died",
+			position = 2
+	)
+	default boolean printRemaining()
+	{
+		return false;
+	}
 }
