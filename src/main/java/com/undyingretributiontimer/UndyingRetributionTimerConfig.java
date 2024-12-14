@@ -79,10 +79,27 @@ public interface UndyingRetributionTimerConfig extends Config
 			keyName = "printRemaining",
 			name = "Print remaining time in chat",
 			description = "Print how much time was left on cooldown when you died",
-			position = 2
+			position = 3
 	)
 	default boolean printRemaining()
 	{
 		return true;
+	}
+
+	enum GreyIcon
+	{
+		ALWAYS,
+		COOLDOWN,
+		NEVER
+	}
+	@ConfigItem(
+			keyName = "infoboxIcon",
+			name = "Grey Icon",
+			description = "When to use darker relic icon",
+			position = 4
+	)
+	default GreyIcon infoboxIcon()
+	{
+		return GreyIcon.COOLDOWN;
 	}
 }

@@ -27,17 +27,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.undyingretributiontimer;
-import com.undyingretributiontimer.RaidRoom;
 
 
 import com.google.inject.Provides;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.EnumSet;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.World;
 import net.runelite.api.WorldType;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -48,11 +45,7 @@ import net.runelite.api.Player;
 import net.runelite.api.Varbits;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.ActorDeath;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -138,6 +131,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 				checkCooldown();
 			}
 		}
+		createInfobox();
 	}
 
 	@Override
@@ -290,12 +284,10 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		boolean currentlyInRaid = inRaidNow();
 		if (currentlyInRaid && !previouslyInRaid)
 		{
-			System.out.println("Raid entered");
 			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "true");
 		}
 		else if (!currentlyInRaid && previouslyInRaid)
 		{
-			System.out.println("Raid left");
 			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "false");
 			if (onCooldown)
 			{
@@ -322,12 +314,13 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 	private void offCooldown()
 	{
-		if (config.onlyShowOnCooldown())
-		{
-			removeInfobox();
-		}
 		onCooldown = false;
 		remainingTicks = 0;
+		removeInfobox();
+		if (!config.onlyShowOnCooldown())
+		{
+			createInfobox();
+		}
 		save(false);
 	}
 
@@ -335,19 +328,35 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		if (infoBox == null)
 		{
-			BufferedImage icon = ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class, "/icons/infoboxIcon.png");
 			infoBox = new UndyingRetributionTimerInfoBox(this, config);
-			infoBox.setImage(icon);
+			infoBox.setImage(chooseIcon());
 			infoBoxManager.addInfoBox(infoBox);
 		}
+	}
+
+	private BufferedImage chooseIcon()
+	{
+		if (
+				config.infoboxIcon()== UndyingRetributionTimerConfig.GreyIcon.NEVER
+						|| (!onCooldown && config.infoboxIcon()== UndyingRetributionTimerConfig.GreyIcon.COOLDOWN)
+		)
+			return ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class, "/icons/infoboxIcon.png");
+		else if (
+				config.infoboxIcon()== UndyingRetributionTimerConfig.GreyIcon.ALWAYS
+						|| (config.infoboxIcon()== UndyingRetributionTimerConfig.GreyIcon.COOLDOWN && onCooldown)
+		)
+			return ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class, "/icons/infoboxLessIntrusiveIcon.png");
+		// IDE was whining
+		return ImageUtil.loadImageResource(UndyingRetributionTimerPlugin.class, "/icons/infoboxIcon.png");
 	}
 
 	private void cooldown(int ticks)
 	{
 		if (ticks != 0)
 		{
-			createInfobox();
+			removeInfobox();
 			onCooldown = true;
+			createInfobox();
 			remainingTicks = ticks;
 		}
 	}
@@ -403,6 +412,11 @@ public class UndyingRetributionTimerPlugin extends Plugin
 				createInfobox();
 			}
 		}
+		if (e.getKey().contains("infoboxIcon"))
+		{
+			removeInfobox();
+			createInfobox();
+		}
 	}
 
 	private void save(boolean quitting)
@@ -422,6 +436,20 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		{
 			infoBoxManager.removeInfoBox(infoBox);
 			infoBox = null;
+		}
+	}
+
+	@Subscribe
+	public void onCommandExecuted(CommandExecuted commandExecuted)
+	{
+		if (commandExecuted.getCommand().equalsIgnoreCase("lstest"))
+		{
+			if (!onCooldown)
+			{
+				cooldown(maxTicks);
+				return;
+			}
+			offCooldown();
 		}
 	}
 
