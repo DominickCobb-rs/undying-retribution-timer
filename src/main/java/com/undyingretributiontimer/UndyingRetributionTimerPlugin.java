@@ -191,7 +191,6 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 		if (leftRaid || (previouslyInToa && !inToa))
 		{
-			System.out.println("Leave raid detected, resetting cooldown");
 			offCooldown();
 			previouslyInToa = false;
 			leftRaid = false;
