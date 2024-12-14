@@ -316,11 +316,12 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		onCooldown = false;
 		remainingTicks = 0;
-		removeInfobox();
-		if (!config.onlyShowOnCooldown())
+		if (config.onlyShowOnCooldown())
 		{
-			createInfobox();
+			removeInfobox();
 		}
+		infoBox.setImage(chooseIcon());
+		infoBoxManager.updateInfoBoxImage(infoBox);
 		save(false);
 	}
 
@@ -354,10 +355,12 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		if (ticks != 0)
 		{
-			removeInfobox();
 			onCooldown = true;
 			createInfobox();
+			infoBox.setImage(chooseIcon());
+			infoBoxManager.updateInfoBoxImage(infoBox);
 			remainingTicks = ticks;
+			infoBox.setImage(chooseIcon());
 		}
 	}
 
@@ -414,8 +417,8 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		}
 		if (e.getKey().contains("infoboxIcon"))
 		{
-			removeInfobox();
-			createInfobox();
+			infoBox.setImage(chooseIcon());
+			infoBoxManager.updateInfoBoxImage(infoBox);
 		}
 	}
 
