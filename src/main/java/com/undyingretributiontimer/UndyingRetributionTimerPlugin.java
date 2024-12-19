@@ -121,17 +121,16 @@ public class UndyingRetributionTimerPlugin extends Plugin
 				configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", false);
 				offCooldown();
 				remainingTicks = 0;
-				if (!config.onlyShowOnCooldown())
-				{
-					createInfobox();
-				}
 			}
 			else
 			{
 				checkCooldown();
 			}
+			if (!config.onlyShowOnCooldown())
+			{
+				createInfobox();
+			}
 		}
-		createInfobox();
 	}
 
 	@Override
@@ -248,12 +247,12 @@ public class UndyingRetributionTimerPlugin extends Plugin
 
 						case SECONDS:
 						{
-							remains = to_mmss(remainingTicks)+" seconds";
+							remains = to_mmss(remainingTicks);
 						} break;
 
 						case DECIMALS:
 						{
-							remains = to_mmss_precise_short(remainingTicks)+" seconds";
+							remains = to_mmss_precise_short(remainingTicks);
 						} break;
 					}
 					ChatMessageBuilder chatMessage = new ChatMessageBuilder()
