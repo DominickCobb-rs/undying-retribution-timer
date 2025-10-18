@@ -198,7 +198,6 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		if (remainingTicks >= 0)
 		{
 			remainingTicks -= 1;
-            log.info("Remaining Ticks now: {}",remainingTicks);
 		}
 		previouslyInToa = inToa;
 	}
