@@ -113,7 +113,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			configManager.setConfiguration(CONFIG_GROUP, "previouslyInRaid", "false");
 			configManager.setConfiguration(CONFIG_GROUP, "cooldown", "-1");
 		}
-		if (client.getGameState().equals(GameState.LOGGED_IN) && client.getWorldType().contains(WorldType.SEASONAL))
+		if (client.getGameState().equals(GameState.LOGGED_IN) && !isMainGame());
 		{
 			previouslyInRaid = Boolean.parseBoolean(configManager.getConfiguration(CONFIG_GROUP, "previouslyInRaid"));
 			if (previouslyInRaid && !inRaidNow())
@@ -144,7 +144,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	{
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
-			if (!client.getWorldType().contains(WorldType.SEASONAL))
+			if (isMainGame())
 			{
 				removeInfobox();
 				return;
@@ -172,7 +172,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!onCooldown || pause || !client.getWorldType().contains(WorldType.TOURNAMENT_WORLD))
+		if (!onCooldown || pause || isMainGame())
 		{
 			return;
 		}
@@ -225,7 +225,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onActorDeath(ActorDeath actorDeath)
 	{
-		if (!client.getWorldType().contains(WorldType.SEASONAL))
+		if (isMainGame())
 		{
 			return;
 		}
@@ -274,7 +274,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged e)
 	{
-		if (!(client.getWorldType().contains(WorldType.SEASONAL)) && e.getVarbitId() != Varbits.THEATRE_OF_BLOOD && e.getVarbitId() != Varbits.IN_RAID)
+		if (isMainGame() && e.getVarbitId() != Varbits.THEATRE_OF_BLOOD && e.getVarbitId() != Varbits.IN_RAID)
 		{
 			return;
 		}
@@ -453,6 +453,11 @@ public class UndyingRetributionTimerPlugin extends Plugin
 			offCooldown();
 		}
 	}
+
+    private boolean isMainGame()
+    {
+        return !client.getWorldType().contains(WorldType.SEASONAL) && !client.getWorldType().contains(WorldType.TOURNAMENT_WORLD);
+    }
 
 	@Provides
 	UndyingRetributionTimerConfig provideConfig(ConfigManager configManager)
