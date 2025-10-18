@@ -172,7 +172,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!onCooldown || pause || !client.getWorldType().contains(WorldType.SEASONAL))
+		if (!onCooldown || pause || !client.getWorldType().contains(WorldType.TOURNAMENT_WORLD))
 		{
 			return;
 		}
@@ -198,6 +198,7 @@ public class UndyingRetributionTimerPlugin extends Plugin
 		if (remainingTicks >= 0)
 		{
 			remainingTicks -= 1;
+            log.info("Remaining Ticks now: {}",remainingTicks);
 		}
 		previouslyInToa = inToa;
 	}
